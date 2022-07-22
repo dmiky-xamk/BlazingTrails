@@ -1,0 +1,44 @@
+﻿@*Routable component. Define the route this component is responsible for.*@
+@page "/"
+
+@*The an instance from dependency injection.*@
+@inject HttpClient Http
+
+@*Set the title displayed in the browser tab.*@
+<PageTitle>Blazing Trails</PageTitle>
+
+@if (_trails is null)
+{
+    <p>Loading trails...</p>
+}
+
+else
+{
+    <div class="grid">
+        @foreach (var trail in _trails)
+        {
+            <TrailCard Trail="trail"/>
+        }
+    </div>
+}
+
+
+@code {
+    private IEnumerable<Trail>? _trails;
+
+    // Run only once in the component's lifetime.
+    protected override async Task OnInitializedAsync()
+    {
+        // Http.Json methods throw 'HttpRequestException' if non-success code is returned from the server.
+        try
+        {
+            // Get a JSON payload from a static file. Mimics an API call.
+            _trails = await Http.GetFromJsonAsync<IEnumerable<Trail>>("trails/trail-data.json");
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"There was a problem loading trail data: {ex.Message}");
+            throw;
+        }
+    }
+}
