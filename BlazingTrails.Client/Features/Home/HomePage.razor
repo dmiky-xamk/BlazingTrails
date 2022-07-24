@@ -14,19 +14,31 @@
 
 else
 {
+    // Data is passed to component parameters using attributes on the element.
+    <TrailDetails Trail="_selectedTrail"/>
+
     <div class="grid">
         @foreach (var trail in _trails)
         {
-            <TrailCard Trail="trail"/>
+            <TrailCard Trail="trail" OnSelected="HandleTrailSelected"/>
         }
     </div>
 }
 
+@*
+    NOTES:
+
+    OnAfterRender / Async methods:
+    On the initial render the firstRender bool will be true.
+    The primary use is to perform JavaScript interop and other DOM-related operations, such as focusing an element.
+*@
 
 @code {
     private IEnumerable<Trail>? _trails;
+    private Trail? _selectedTrail;
 
     // Run only once in the component's lifetime.
+    // Great place to make API calls for initial data.
     protected override async Task OnInitializedAsync()
     {
         // Http.Json methods throw 'HttpRequestException' if non-success code is returned from the server.
@@ -41,4 +53,8 @@ else
             throw;
         }
     }
+
+    // Blazor will automatically call 'StateHasChanged' as the child component
+    // defined its event as 'EventCallback' type.
+    private void HandleTrailSelected(Trail trail) => _selectedTrail = trail;
 }

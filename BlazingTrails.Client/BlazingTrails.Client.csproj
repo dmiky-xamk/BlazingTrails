@@ -1,10 +1,54 @@
-<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+	  
+	  <!-- Define a file that is used to record the last time an NPM install was performed. -->
+	  <NpmLastInstall>node_modules/.last-install</NpmLastInstall>
   </PropertyGroup>
+
+	<!-- 
+		If running the app with 'dotnet watch', only rebuild the app when 
+		changes are made to SCSS files and not the CSS file.
+		Without this we end up in an infinite loop.
+	-->
+	<ItemGroup>
+		<Watch Include="**/*.scss" />
+		<None Update="**/*.css" Watch="false" />
+	</ItemGroup>
+
+	<!-- 
+		Run a command to check for the NPM version. 
+		If a nonzero error code is returned, then NPM is not installed and a error is shown on the build. 
+	-->
+	<Target Name="CheckForNpm" BeforeTargets="RunNpmInstall">
+		<Exec Command="npm --version" ContinueOnError="true">
+			<Output TaskParameter="ExitCode" PropertyName="ErrorCode"/>
+		</Exec>
+		<Error Condition="'$(ErrorCode)' != '0'" Text="NPM is required to build this project." />
+	</Target>
+
+	<!-- 
+		Run npm install but only when package.json is newer than NpmLastInstall specified in the PropertyGroup.
+		This means npm install will be run only when something has changed and not on every build.
+	-->
+	<Target Name="RunNpmInstall" BeforeTargets="CompileScopedScss" Inputs="package.json" Outputs="$(NpmLastInstall)">
+		<Exec Command="npm install" />
+		<Touch Files="$(NpmLastInstall)" AlwaysCreate="true" />
+	</Target>
+
+	<Target Name="CompileScopedScss" BeforeTargets="Compile">
+
+		<!-- The ItemGroup searches for all scoped SCSS files inside the Feature folder. -->
+		<ItemGroup>
+			<ScopedScssFiles Include="Features/**/*.razor.scss" />
+		</ItemGroup>
+
+		<!-- Runs the sass npm package to compile any SCSS files to CSS via the script defined in the package.json file. -->
+		<Exec Command="npm run sass -- %(ScopedScssFiles.Identity) %(relativedir)%(filename).css" />
+	</Target>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.6" />
