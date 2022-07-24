@@ -17,9 +17,12 @@ else
     // Data is passed to component parameters using attributes on the element.
     <TrailDetails Trail="_selectedTrail"/>
 
+    <TrailSearch />
+
     <div class="grid">
         @foreach (var trail in _trails)
         {
+            Console.WriteLine(trail.Id);
             <TrailCard Trail="trail" OnSelected="HandleTrailSelected"/>
         }
     </div>
@@ -46,6 +49,7 @@ else
         {
             // Get a JSON payload from a static file. Mimics an API call.
             _trails = await Http.GetFromJsonAsync<IEnumerable<Trail>>("trails/trail-data.json");
+            Console.WriteLine(_trails);
         }
         catch (HttpRequestException ex)
         {

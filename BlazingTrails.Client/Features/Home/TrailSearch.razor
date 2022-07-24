@@ -1,0 +1,38 @@
+﻿@inject NavigationManager NavManager
+
+<div class="p-5 mb-4">
+    <div class="jumbotron container-fluid py-5">
+        <h1 class="display-4 text-center">Welcome to Blazing Trails</h1>
+        <p class="lead text-center">Find the most beautiful hiking trails using our blazing fast search!</p>
+        <p class="mt-4">
+            <input @onkeydown="SearchForTrail"
+                   @bind="_searchTerm"
+                   @bind:event="oninput"
+                   type="text"
+                   aria-label="Search for a trail"
+                   placeholder="Search for a trail..."
+                   class="form-control form-control-lg" />
+        </p>
+    </div>
+</div>
+
+@code {
+
+    // @bind: Two-way binding. Bind the user input text to the _searchTerm field.
+    // @bind:event="oninput" Update the field whenever the oninput event fires, essentially when a new character is entered.
+    private string _searchTerm = string.Empty;
+
+    // @onkeydown: Method gets called every time a keydown event is fired.
+    private void SearchForTrail(KeyboardEventArgs args)
+    {
+        // Return if the key pressed wasn't the Enter key.
+        if (args.Key != "Enter")
+        {
+            return;
+        }
+
+        // Use NavigationManager.NavigateTo to programmatically navigate
+        // to the search page, passing the search term entered by the user.
+        NavManager.NavigateTo($"/search/{_searchTerm}");
+    }
+}

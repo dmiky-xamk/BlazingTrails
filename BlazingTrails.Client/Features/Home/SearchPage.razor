@@ -1,0 +1,125 @@
+﻿@*
+    Defining route parameters.
+    Route parameters act as a placeholder for a value that will be supplied later. (Like arguments for a method.)
+    A single component can be responsible for multiple routes.
+*@
+@page "/search/{SearchTerm}"
+
+@*
+    {MaxLength: route parameter
+    :int} : route constraint
+
+    By default, all route parameters are considered strings by Blazor.
+    Route constraints are important when dealing with nonstring route parameters.
+    More info: http://mng.bz/d2xg
+
+    @page "/search/{SearchTerm}/maxlength/{MaxLength:int}"
+*@
+@inject HttpClient Http
+
+<PageTitle>@SearchTerm - Blazing Trails</PageTitle>
+
+<!-- Breadcrumbs allow navigation back to the home page. -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="/">Home</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Search</li>
+    </ol>
+</nav>
+
+<h3 class="mt-5 mb-4">Search results for @SearchTerm</h3>
+<SearchFilter SearchTerm="@SearchTerm" MaxLength="MaxLength" MaxTime="MaxTime"/>
+
+@if (_searchResults is null)
+{
+    <p>Loading search results...</p>
+}
+
+else
+{
+    <TrailDetails Trail="_selectedTrail" />
+
+    <div class="grid">
+        @foreach (var trail in _searchResults)
+        {
+            <TrailCard Trail="trail" OnSelected="HandleTrailSelected" />
+        }
+    </div>
+}
+
+@code {
+    private IEnumerable<Trail>? _searchResults;
+    private Trail? _selectedTrail;
+
+    // Store a copy of the unfiltered search results.
+    private IEnumerable<Trail> _cachedSearchResults = Enumerable.Empty<Trail>();
+
+    // A component parameter matching the name of the route parameter is required to capture its value.
+    [Parameter]
+    public string SearchTerm { get; set; } = default!; // The search term can't be null.
+
+    // Blazor will attempt to set the value of the property based on a query string with a matching name.
+    [Parameter, SupplyParameterFromQuery]
+    public int? MaxLength { get; set; }
+
+    [Parameter, SupplyParameterFromQuery]
+    public int? MaxTime { get; set; }
+
+    // When the component is loaded it will get all the trails from the file and
+    // match any that contain the search term.
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var allTrails = await Http.GetFromJsonAsync<IEnumerable<Trail>>("trails/trail-data.json");
+
+            _searchResults = allTrails!
+                .Where(x => x.Name.Contains(SearchTerm, StringComparison.CurrentCultureIgnoreCase) ||
+                            x.Location.Contains(SearchTerm, StringComparison.CurrentCultureIgnoreCase));
+
+            _cachedSearchResults = _searchResults;
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"There was a problem loading trail data: ${ex.Message}");
+        }
+    }
+
+    // This method will execute every time the filter is updated.
+    protected override void OnParametersSet() 
+        => UpdateFilters();
+
+    private void UpdateFilters()
+    {
+        // Holds a list of lambda expressions based on which search filters are present.
+        var filters = new List<Func<Trail, bool>>();
+
+        if (MaxLength is not null & MaxLength > 0)
+        {
+            filters.Add(x => x.Length <= MaxLength);
+        }
+
+        if (MaxTime is not null && MaxTime > 0)
+        {
+            filters.Add(x => x.TimeInMinutes <= MaxTime * 60);
+        }
+
+        // If any filters, filter the cached search results using them.
+        if (filters.Any())
+        {
+            _searchResults = _cachedSearchResults
+                .Where(trail => filters.All(filter => filter(trail)));
+        }
+
+        // Use the unfiltered cache results.
+        else
+        {
+            _searchResults = _cachedSearchResults;
+        }
+    }
+
+    private void HandleTrailSelected(Trail trail) 
+        => _selectedTrail = trail;
+}

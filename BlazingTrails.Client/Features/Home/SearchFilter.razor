@@ -1,0 +1,74 @@
+﻿@inject NavigationManager NavManager
+
+<div class="filters">
+    <label for="maxLength">Max Length (km)</label>
+    <input id="maxLength"
+           type="number"
+           class="form-control"
+           @bind="_maxLength" />
+
+    <label for="maxTime">Max Time (hours)</label>
+    <input id="maxTime"
+           type="number"
+           class="form-control"
+           @bind="_maxTime" />
+
+    <button class="btn btn-outline-primary"
+            @onclick="FilterSearchResults">
+        Filter
+    </button>
+    <button class="btn btn-outline-secondary"
+            @onclick="ClearSearchFilter">
+        Clear
+    </button>
+</div>
+
+@code {
+    // Bind the HTML inputs to the user's values.
+    private int _maxLength;
+    private int _maxTime;
+
+    [Parameter]
+    public int? MaxLength { get; set; }
+
+    [Parameter]
+    public int? MaxTime { get; set; }
+
+    // The filter needs to know the search term to navigate correctly.
+    [Parameter, EditorRequired]
+    public string SearchTerm { get; set; } = default!;
+
+    // Initializes the fields if SearchPage with filters is loaded directly.
+    protected override void OnInitialized()
+    {
+        _maxLength = MaxLength ?? 0;
+        _maxTime = MaxTime ?? 0;
+    }
+
+    // Filter using query-string values instead of route parameters.
+    private void FilterSearchResults()
+    {
+        // Construct a URI containing the key-value pairs provided as a query string.
+        var uriWithQueryString =
+            NavManager.GetUriWithQueryParameters(
+                new Dictionary<string, object?>()
+                    {
+                        [nameof(SearchPage.MaxLength)] =     // Define the name of the key by referencing the property on the SearchPage. (Avoids magic strings.)
+                        _maxLength == 0 ? null : _maxLength, // If the value of a key is null, the method will omit the entry from the query string.
+
+                        [nameof(SearchPage.MaxTime)] =
+                        _maxTime == 0 ? null : _maxTime
+                    });
+
+        // Navigates to the URI with the query string.
+        NavManager.NavigateTo(uriWithQueryString);
+    }
+
+    // To clear the filter we navigate to the original route.
+    private void ClearSearchFilter()
+    {
+        _maxLength = 0;
+        _maxTime = 0;
+        NavManager.NavigateTo($"/search/{SearchTerm}");
+    }
+}
