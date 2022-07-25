@@ -49,6 +49,16 @@ a:hover {
     border-color: var(--brand);
 }
 
+.form-control:focus {
+    border-color: var(--brand);
+}
+
+.breadcrumb {
+    background: rgba(230, 230, 230, 0.3);
+    padding: 0.6rem 0.8rem;
+    border-radius: 4px;
+}
+
 .grid {
     display: grid;
     grid-template-columns: repeat(3, 288px);
@@ -73,4 +83,22 @@ a:hover {
     position: absolute;
     right: 0.75rem;
     top: 0.5rem;
+}
+
+/* Chapter 5.2.2: Validation styles */
+
+.validation-message {
+    color: red;
+}
+
+input.invalid,
+textarea.invalid,
+select.invalid {
+    border-color: red;
+}
+
+input.valid.modified,
+text.valid.modified,
+select.valid.modified {
+    border-color: green;
 }

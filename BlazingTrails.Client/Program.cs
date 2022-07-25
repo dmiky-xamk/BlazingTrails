@@ -1,9 +1,13 @@
 using BlazingTrails.Client;
+using MediatR;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 // WebAssemblyHost = Blazor WASM
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
+
+// Let MediatR to pass the requests to a correct handler.
+builder.Services.AddMediatR(typeof(Program).Assembly);
 
 // Root components.
 builder.RootComponents.Add<App>("#app"); // Entry point to the application.
