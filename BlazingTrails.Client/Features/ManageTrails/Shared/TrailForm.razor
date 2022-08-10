@@ -1,41 +1,9 @@
-﻿@page "/add-trail"
-
-@inject IMediator Mediator
-
-<PageTitle>Add Trail - Blazing Trails</PageTitle>
-
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-            <a href="/">Home</a>
-        </li>
-        <li class="breadcrumb-item active" aria-current="page">Add Trail</li>
-    </ol>
-</nav>
-
-<h3 class="mt-5 mb-4">Add a trail</h3>
-
-@if (_submitSuccessful)
-{
-    <div class="alert alert-success" role="alert">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-            <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75                                          0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
-        </svg>
-        Your trail has been submitted successfully!
-    </div>
-}
-else if (_errorMessage is not null)
-{
-    <div class="alert alert-danger" role="alert">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-x-circle-fill" viewBox="0 0 16 16">
-            <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5                                          0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z" />
-        </svg>
-        @_errorMessage
-    </div>
-}
+﻿@using BlazingTrails.Client.Validation
+@using BlazingTrails.Shared.Features.ManageTrails.Shared
 
 @* Blazor's EditForm component helps building a form with validation. *@
-<EditForm Model="_trail" OnValidSubmit="SubmitForm">
+@* Pass the EditContext instance to EditForm we create rather than the model directly. *@
+<EditForm EditContext="_editContext" OnValidSubmit="SubmitForm">
     <FluentValidationValidator />
 
     <FormSection Title="Basic Details"
@@ -69,6 +37,28 @@ else if (_errorMessage is not null)
                        id="trailLocation" />
             <ValidationMessage For="(() => _trail.Location)" />
         </FormFieldSet>
+
+        @* InputFile doesn't use the bind directive like other input components. Instead, we must handle the OnChange event.' *@
+        <FormFieldSet>
+            <label for="trailImage" class="fw-bold text-secondary col-form-label">Image</label>
+
+            @if (string.IsNullOrWhiteSpace(_trail.Image))
+            {
+                <InputFile class="form-control" id="trailImage" accept=".png, .jpg, .jpeg" OnChange="LoadTrailImage" />
+            }
+
+            else
+            {
+                <div class="card bg-dark text-white">
+                    <img src="images/@_trail.Image" alt="Image of the trail" />
+                    <div class="card-img-overlay">
+                        <button class="btn btn-primary btn-sm" @onclick="RemoveTrailImage">Remove</button>
+                    </div>
+                </div>
+            }
+
+        </FormFieldSet>
+
     </FormSection>
 
     <FormSection Title="Difficulty"
@@ -82,6 +72,13 @@ else if (_errorMessage is not null)
             <ValidationMessage For="(() => _trail.Length)" />
 
         </FormFieldSet>
+
+        <FormFieldSet Width="col-5">
+            <label for="trailTime" class="fw-bold text-secondary col-form-label">Time</label>
+            <InputTime @bind-Value="_trail.TimeInMinutes" id="trailTime" />
+            <ValidationMessage For="(() => _trail.TimeInMinutes)" />
+        </FormFieldSet>
+
     </FormSection>
 
     <FormSection Title="Route Instructions"
@@ -172,29 +169,83 @@ else if (_errorMessage is not null)
 </EditForm>
 
 @code {
-
     // A new instance is created when the component is initialized
     // and assigned to the EditForm's model parameter.
     // Input components in the form will be bound to its properties.
     private TrailDto _trail = new TrailDto();
+    private EditContext _editContext = default!;
 
-    private bool _submitSuccessful;
-    private string? _errorMessage;
+    // Holds the file data.
+    private IBrowserFile? _trailImage;
 
-    private async Task SubmitForm()
+    // Define an event that passes the data entered in the form to the handler specified by the consuming component.
+    // Not EventCallback<T> as we want to manually control when StateHasChanged in the handler.
+    [Parameter]
+    public Func<TrailDto, IBrowserFile?, Task> OnSubmit { get; set; } = default!;
+
+    // Allows an existing trail to the passed to the form (editing).
+    [Parameter]
+    public TrailDto? Trail { get; set; }
+
+    // Replaces OnInitialized.
+    // Will be called whenever an update happens to the object passed in via the Trail parameter.
+    // We need this so we can update or remove the image after SubmitEditTrail handler in the EditTrailPage runs.
+    protected override void OnParametersSet()
     {
-        var response = await Mediator.Send(
-            new AddTrailRequest(_trail));
+        // Having direct access to EditContext allows to manually trigger validation
+        // or hook onto events such as OnFieldChanged or OnValidationStateChanged.
+        // Create a new EditContext instance for the trail model.
+        _editContext = new EditContext(_trail);
 
-        if (response.TrailId == -1)
+        // Configure the EditContext to use our new class provider.
+        _editContext.SetFieldCssClassProvider(new BootstrapCssClassProvider());
+
+        // If editing, copy the details into the local _trail field that the form components are bound to.
+        if (Trail is not null)
         {
-            _errorMessage = "There was a problem saving your trail.";
-            _submitSuccessful = false;
-            return;
-        }
+            _trail.Id = Trail.Id;
+            _trail.Name = Trail.Name;
+            _trail.Description = Trail.Description;
+            _trail.Location = Trail.Location;
+            _trail.Image = Trail.Image;
+            _trail.ImageAction = Trail.ImageAction;
+            _trail.Length = Trail.Length;
+            _trail.TimeInMinutes = Trail.TimeInMinutes;
 
-        _trail = new TrailDto();
-        _errorMessage = null;
-        _submitSuccessful = true;
+            _trail.Route.Clear();
+            _trail.Route.AddRange(Trail.Route
+                .Select(ri => new TrailDto.RouteInstruction
+                {
+                    Stage = ri.Stage,
+                    Description = ri.Description
+                })
+            );
+        }
     }
+
+    // Will be called by the consuming component to reset the form if required.
+    public void ResetForm()
+    {
+        _trail = new TrailDto();
+        _editContext = new EditContext(_trail);
+        _editContext.SetFieldCssClassProvider(new BootstrapCssClassProvider());
+        _trailImage = null;
+    }
+
+    // Assign the selected file to the trailImage field.
+    private void LoadTrailImage(InputFileChangeEventArgs e)
+    {
+        _trailImage = e.File;
+        _trail.ImageAction = ImageAction.Add;
+    }
+    
+    private void RemoveTrailImage()
+    {
+        _trailImage = null;
+        _trail.ImageAction = ImageAction.Remove;
+    }
+
+    // EditForm's OnValidSubmit will invoke this. Allows the handler to decide how to persist the data from the form.
+    private async Task SubmitForm()
+        => await OnSubmit(_trail, _trailImage);
 }

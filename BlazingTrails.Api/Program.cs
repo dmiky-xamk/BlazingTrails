@@ -1,4 +1,5 @@
 using BlazingTrails.Api;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,13 @@ app.UseBlazorFrameworkFiles();
 
 // This middleware enables static files to be server by the API.
 app.UseStaticFiles();
+
+app.UseStaticFiles(new StaticFileOptions()
+{
+    // Allow the API to server images in the Images folder to the Blzor application as static files.
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Images")),
+    RequestPath = new PathString("/Images")
+});
 
 app.UseAuthorization();
 

@@ -1,10 +1,15 @@
 ﻿using Ardalis.ApiEndpoints;
 using BlazingTrails.Api.Persistence;
 using BlazingTrails.Api.Persistence.Entities;
-using BlazingTrails.Shared.Features.ManageTrails;
+using BlazingTrails.Shared.Features.ManageTrails.AddTrail;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BlazingTrails.Api.Features.ManageTrails;
+namespace BlazingTrails.Api.Features.ManageTrails.AddTrail;
+
+/*
+ * QUESTION:
+ * Does the user have access to the Validator located inside the BlazingTrails.Shared so that they can modify its functionality?
+*/
 
 // Using the ApiEndpoints library.
 // Defining the request and the response the endpoint will handle.

@@ -1,7 +1,8 @@
-﻿using FluentValidation;
+﻿using BlazingTrails.Shared.Features.ManageTrails.Shared;
+using FluentValidation;
 using MediatR;
 
-namespace BlazingTrails.Shared.Features.ManageTrails;
+namespace BlazingTrails.Shared.Features.ManageTrails.AddTrail;
 
 // Records are considered preferable for DTOs due to their immutability and value type qualities.
 public record AddTrailRequest(TrailDto Trail) :

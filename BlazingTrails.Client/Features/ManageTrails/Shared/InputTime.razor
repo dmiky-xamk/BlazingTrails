@@ -1,0 +1,71 @@
+﻿@* Base class for the component. Type param must match the type of the form model property the component will bind to. *@
+@inherits InputBase<int>
+
+<div class="input-time">
+    <div>
+        <!-- InputBase provides CssClass property that outputs the correct validation classes based on our field's state. -->
+        <input class="form-control @CssClass"
+               id="hours"
+               type="number"
+               min="0"
+               value="@_hours"
+               @onchange="SetHourValue" />
+
+        <label for="hours">Hours</label>
+    </div>
+    <div>
+
+    <input class="form-control @CssClass"
+           id="minutes"
+           type="number"
+           min="0"
+           max="59 "
+           value="@_minutes"
+           @onchange="SetMinuteValue" />
+
+    <label for="minutes">Minutes</label>
+    </div>
+</div>
+
+@code {
+
+    // Track the current value of each input.
+    private int _hours;
+    private int _minutes;
+
+    // Extract the value from the input and convert it to an integer.
+    private void SetHourValue(ChangeEventArgs args)
+    {
+        int.TryParse(args.Value?.ToString(), out _hours);
+
+        SetCurrentValue();
+    }
+
+    private void SetMinuteValue(ChangeEventArgs args)
+    {
+        int.TryParse(args.Value?.ToString(), out _minutes);
+
+        SetCurrentValue();
+    }
+
+    // Set the CurrentValue prop (that the InputBase class provides) to total minutes.
+    private void SetCurrentValue()
+        => CurrentValue = (_hours * 60) + _minutes;
+
+    // Must implement the method override when using InputBase<T>.
+    // Won't be called with our design.
+    protected override bool TryParseValueFromString(
+    string? value, out int result,
+    out string validationErrorMessage)
+    => throw new NotImplementedException();
+
+    // For loading an existing value, for example when the component is used to edit an existing record.
+    protected override void OnParametersSet()
+    {
+        if (CurrentValue > 0)
+        {
+            _hours = CurrentValue / 60;
+            _minutes = CurrentValue % 60;
+        }
+    }
+}

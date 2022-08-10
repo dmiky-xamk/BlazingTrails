@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 
-namespace BlazingTrails.Shared.Features.ManageTrails;
+namespace BlazingTrails.Shared.Features.ManageTrails.Shared;
 
 public class TrailDto
 {
@@ -12,11 +12,25 @@ public class TrailDto
     public int Length { get; set; }
     public List<RouteInstruction> Route { get; set; } = new List<RouteInstruction>();
 
+    // Holds the filename of an existing image.
+    public string? Image { get; set; }
+
+    // Allows us to set what operation to perform on the trail image when updating the trail.
+    public ImageAction ImageAction { get; set; }
+
     public class RouteInstruction
     {
         public int Stage { get; set; }
         public string Description { get; set; } = string.Empty;
     }
+}
+
+// Containts the various operations that can be performed on an image.
+public enum ImageAction
+{
+    None,
+    Add,
+    Remove
 }
 
 // Create a validator to validate the user inputs.
@@ -39,6 +53,9 @@ public class TrailValidator : AbstractValidator<TrailDto>
 
         RuleFor(x => x.Route).NotEmpty()
             .WithMessage("Please add a route instruction");
+
+        RuleFor(x => x.TimeInMinutes).GreaterThan(0)
+            .WithMessage("Please enter a time");
 
         // Validate each entry in the Route collection by using the given validator.
         RuleForEach(x => x.Route).SetValidator(new RouteInstructionValidator());

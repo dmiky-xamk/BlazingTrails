@@ -1,8 +1,8 @@
-﻿using BlazingTrails.Shared.Features.ManageTrails;
+﻿using BlazingTrails.Shared.Features.ManageTrails.AddTrail;
 using MediatR;
 using System.Net.Http.Json;
 
-namespace BlazingTrails.Client.Features.ManageTrails;
+namespace BlazingTrails.Client.Features.ManageTrails.AddTrail;
 
 // TRequest is the type of request the handler handles.
 // TResponse is the response the handler will return.
