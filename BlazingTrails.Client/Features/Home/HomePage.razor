@@ -1,8 +1,8 @@
 ﻿@*Routable component. Define the route this component is responsible for.*@
 @page "/"
 
-@*The an instance from dependency injection.*@
-@inject HttpClient Http
+@*The instance from dependency injection.*@
+@inject IMediator Mediator
 
 @*Set the title displayed in the browser tab.*@
 <PageTitle>Blazing Trails</PageTitle>
@@ -12,19 +12,48 @@
     <p>Loading trails...</p>
 }
 
-else
+else if (_trails.Any())
 {
     // Data is passed to component parameters using attributes on the element.
-    <TrailDetails Trail="_selectedTrail"/>
+    <TrailDetails Trail="_selectedTrail" />
 
     <TrailSearch />
 
+    <div class="mb-4">
+        <p class="fst-italic text-center">
+            Do you have an awesome trail you'd like to share?
+            <a href="add-trail">Add it here</a>.
+        </p>
+    </div>
     <div class="grid">
         @foreach (var trail in _trails)
         {
             Console.WriteLine(trail.Id);
-            <TrailCard Trail="trail" OnSelected="HandleTrailSelected"/>
+            <TrailCard Trail="trail" OnSelected="HandleTrailSelected" />
         }
+    </div>
+}
+
+else
+{
+    <div class="no-trails">
+        <svg viewBox="0 0 16 16" class="bi bi-tree" fill="currentColor"
+         xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M8 0a.5.5 0 0 1 .416.223l3
+                4.5A.5.5 0 0 1 11 5.5h-.098l2.022 3.235a.5.5 0 0
+                1-.424.765h-.191l1.638
+                3.276a.5.5 0 0 1-.447.724h-11a.5.5 0 0 1-.447-.724L3.69 9.5H3.5a.5.5 0
+                0 1-.424-.765L5.098 5.5H5a.5.5 0 0 1-.416-.777l3-4.5A.5.5 0 0 1 8
+                0zM5.934 4.5H6a.5.5 0 0 1 .424.765L4.402 8.5H4.5a.5.5 0 0 1
+                .447.724L3.31
+                12.5h9.382l-1.638-3.276A.5.5 0 0 1 11.5 8.5h.098L9.576 5.265A.5.5 0 0
+                1 10 4.5h.066L8 1.401 5.934 4.5z" />
+            <path d="M7 13.5h2V16H7v-2.5z" />
+        </svg>
+        <h3 class="text-muted fw-light">
+            We currently don't have any trails,
+            <a href="add-trail"> why not add one?</a>
+        </h3>
     </div>
 }
 
@@ -47,9 +76,19 @@ else
         // Http.Json methods throw 'HttpRequestException' if non-success code is returned from the server.
         try
         {
-            // Get a JSON payload from a static file. Mimics an API call.
-            _trails = await Http.GetFromJsonAsync<IEnumerable<Trail>>("trails/trail-data.json");
-            Console.WriteLine(_trails);
+            // Dispatch a request to get the trails from the API.
+            var response = await Mediator.Send(new GetTrailsRequest());
+
+            _trails = response.Trails.Select(x => new Trail
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Image = x.Image ?? string.Empty,
+                    Description = x.Description,
+                    Location = x.Location,
+                    Length = x.Length,
+                    TimeInMinutes = x.TimeInMinutes
+                });
         }
         catch (HttpRequestException ex)
         {
