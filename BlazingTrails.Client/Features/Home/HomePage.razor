@@ -3,6 +3,7 @@
 
 @*The instance from dependency injection.*@
 @inject IMediator Mediator
+@inject NavigationManager NavManager
 
 @*Set the title displayed in the browser tab.*@
 <PageTitle>Blazing Trails</PageTitle>
@@ -25,13 +26,46 @@ else if (_trails.Any())
             <a href="add-trail">Add it here</a>.
         </p>
     </div>
-    <div class="grid">
-        @foreach (var trail in _trails)
-        {
-            Console.WriteLine(trail.Id);
+
+    @*The list of trails is now passed to the component.*@
+    @*We can rename the 'context' variable when the template is defined as RenderFragment<T>.*@
+    @*Renaming the context at the component level means that all the templates will automatically inherit the name.*@
+    <ViewSwitcher Items="_trails" Context="trail">
+        <GridTemplate>
+
+            @*Template that uses RenderFragment<T> allows us to access the properties of the object through a 'context' variable.*@
             <TrailCard Trail="trail" OnSelected="HandleTrailSelected" />
-        }
-    </div>
+        </GridTemplate>
+        <HeaderTemplate>
+            <th>Name</th>
+            <th>Location</th>
+            <th>Length</th>
+            <th>Time</th>
+            <th></th>
+        </HeaderTemplate>
+        <RowTemplate>
+            <th scope="col">@trail.Name</th>
+            <td>@trail.Location</td>
+            <td>@(trail.Length)km</td>
+            <td>@trail.TimeFormatted</td>
+            <td class="text-end">
+
+                <button @onclick="(() => HandleTrailSelected(trail))"
+                    title="View"
+                    class="btn btn-primary">
+                    <i class="bi bi-binoculars"></i>
+                </button>
+
+                <button @onclick="@(() => NavManager.NavigateTo($"/edit-trail/{trail.Id}"))"
+                    title="Edit"
+                    class="btn btn-outline-primary">
+                    <i class="bi bi-pencil"></i>
+                </button>
+            </td>
+        </RowTemplate>
+
+    </ViewSwitcher>
+
 }
 
 else

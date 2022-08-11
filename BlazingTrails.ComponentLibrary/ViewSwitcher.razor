@@ -1,0 +1,81 @@
+﻿@*Specify a type parameter.*@
+@typeparam TItem
+
+<div>
+    <div class="mb-3 text-end">
+        <div class="btn-group">
+
+            @*The buttons allow the user to toggle between the two views offered by the component.*@
+            <button @onclick="(() => _mode = ViewMode.Grid)"
+                    title="Grid View"
+                    type="button"
+                    class="btn @(_mode == ViewMode.Grid ? "btn-secondary" : "btn-outline-secondary")"
+            >
+                <i class="bi bi-grid-fill"></i>
+            </button>
+
+            <button @onclick="(() => _mode = ViewMode.Table)"
+                    title="Table View"
+                    type="button"
+                    class="btn @(_mode == ViewMode.Table ? "btn-secondary" : "btn-outline-secondary")"
+            >
+                <i class="bi bi-table"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+@*Where markup provided by the consumer for the GridTemplate should be output.*@
+@if (_mode == ViewMode.Grid)
+{
+    <div class="grid">
+        @foreach (var item in Items)
+        {
+            @GridTemplate(item)
+        }
+    </div>
+}
+
+@*Where markup provided by the consumer for the TableTemplate should be output.*@
+@*Only require the header cells to be specified when using the component, rather than all the markup for the head of the table.*@
+else if (_mode == ViewMode.Table)
+{
+    <table>
+        <thead>
+            <tr>
+                @HeaderTemplate
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Items)
+            {
+                <tr>
+                    @RowTemplate(item)
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+
+    @*Depending on which mode is active, the component renders one of two templates.*@
+    private ViewMode _mode = ViewMode.Grid;
+
+    // The component accepts a list of items to be displayed.
+    [Parameter, EditorRequired]
+    public IEnumerable<TItem> Items { get; set; } = default!;
+
+    // Defining RenderFragments with a type parameter allows the consumer
+    // to use properties of that type when defining a tmeplate.
+    [Parameter, EditorRequired]
+    public RenderFragment<TItem> GridTemplate { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public RenderFragment HeaderTemplate { get; set; } = default!;
+    
+    [Parameter, EditorRequired]
+    public RenderFragment<TItem> RowTemplate { get; set; } = default!;
+
+    private enum ViewMode { Grid, Table }
+}
