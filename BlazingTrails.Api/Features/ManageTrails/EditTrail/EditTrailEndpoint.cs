@@ -25,7 +25,7 @@ public class EditTrailEndpoint
     {
         // The trail to edit is loaded from the database.
         var trail = await _database.Trails
-            .Include(x => x.Route)
+            .Include(x => x.Waypoints)
             .FirstOrDefaultAsync(x => x.Id == request.Trail.Id, cancellationToken: cancellationToken);
 
         // The trail can't be found.
@@ -40,13 +40,12 @@ public class EditTrailEndpoint
         trail.Location = request.Trail.Location;
         trail.TimeInMinutes = request.Trail.TimeInMinutes;
         trail.Length = request.Trail.Length;
-        trail.Route = request.Trail.Route.Select(ri =>
-                    new RouteInstruction
-                    {
-                        Stage = ri.Stage,
-                        Description = ri.Description,
-                        Trail = trail
-                    }).ToList();
+        trail.Waypoints = request.Trail.Waypoints
+            .Select(wp => new Waypoint
+            {
+                Latitude = wp.Latitude,
+                Longitude = wp.Longitude,
+            }).ToList();
 
         // Remove the physical file from the disk and set the Image property to null.
         if (request.Trail.ImageAction == ImageAction.Remove)

@@ -1,0 +1,116 @@
+﻿@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+@implements IDisposable
+
+@*Using the 'ref' directive, an element reference is captured that can be passed to JavaScript.*@
+<div class="map-wrapper">
+
+    @*Can't add or delete waypoints.*@
+    @if (!IsReadOnly)
+    {
+        @*Contains the 'delete' button.*@
+        <div class="controls">
+            <button @onclick="DeleteLastWaypoint"
+                class="btn btn-secondary"
+                title="Delete last waypoint"
+                type="button">
+                <i class="bi bi-thrash"></i>
+                Remove Last Waypoint
+            </button>
+        </div>
+    }
+    <div style="height: @(Height); width: @(Width);"
+         @ref="_map"></div>
+</div>
+
+@code {
+    private ElementReference _map;
+    private IJSObjectReference? _routeMapModule;
+
+    // Holds a reference to the component.
+    private DotNetObjectReference<RouteMap>? _routeMapReference;
+
+    [Parameter]
+    public string Height { get; set; } = "500px";
+
+    [Parameter]
+    public string Width { get; set; } = "1000px";
+
+    // Can't add or delete waypoints.
+    [Parameter]
+    public bool IsReadOnly { get; set; }
+
+    // Allows to pass waypoints into the component.
+    [Parameter]
+    public List<LatLong> Waypoints { get; set; } = new();
+
+    // Event for adding a waypoint.
+    [Parameter]
+    public EventCallback<LatLong> OnWaypointAdded { get; set; }
+
+    // Event for deleting a waypoint.
+    [Parameter]
+    public EventCallback<LatLong> OnWaypointDeleted { get; set; }
+
+    // USE WITH JAVASCRIPT!
+    // The method will be called after the component has been rendered and the DOM is in place.
+    // As JavaScript code usually operates on the DOM, using an earlier life cycle may result in errors.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Import the routeMap JS module by using 'IJSRuntime' interface.
+            // Reference the physical file using a special path as the code is in a Razor class library.
+            // ./content/{project name}/{path to file}
+            _routeMapModule = await JSRuntime
+                .InvokeAsync<IJSObjectReference>("import", "./_content/BlazingTrails.ComponentLibrary/Map/RouteMap.razor.js");
+
+            // Create an object reference of the component.
+            _routeMapReference = DotNetObjectReference.Create(this);
+
+            // The exported 'initialize' function by the routeMap module is called,
+            // passing in the element reference where the map should be rendered.
+            // Pass in the reference to the 'RouteMap' component.
+            // Pass waypoints.
+            await _routeMapModule.InvokeVoidAsync("initialize", _map, _routeMapReference, Waypoints, IsReadOnly);
+        }
+    }
+
+    // The method is allowed to be called from JavaScript.
+    [JSInvokable]
+    public async void WaypointAdded(decimal latitude, decimal longitude)
+    {
+        // Trigger an event when a waypoint is added.
+        await OnWaypointAdded.InvokeAsync(new LatLong(latitude, longitude));
+    }
+
+    // Clicking the 'delete' button triggers this method.
+    public async Task DeleteLastWaypoint()
+    {
+        if (_routeMapModule is not null)
+        {
+            // 'InvokeAsync' executes the JavaScript function, returning a string.
+            var waypoint = await _routeMapModule
+                .InvokeAsync<LatLong>("deleteLastWaypoint", _map, _routeMapReference);
+
+            // Trigger an event when a waypoint is deleted.
+            await OnWaypointDeleted.InvokeAsync(waypoint);
+        }
+    }
+
+    // Dispose of the routeMapReference.
+    void IDisposable.Dispose()
+    {
+        _routeMapReference?.Dispose();
+    }
+
+    // 'IAsyncDisposable' cleans up the module reference when the component is destroyed.
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (_routeMapModule is not null)
+        {
+            await _routeMapModule.DisposeAsync();
+        }
+    }
+}

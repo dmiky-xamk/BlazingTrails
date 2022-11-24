@@ -14,9 +14,9 @@ public class Trail
     public int TimeInMinutes { get; set; }
     public int Length { get; set; }
 
-    // One-to-many relationship between a Trail and RouteInstructions.
-    // Trail has many RouteInstructions.
-    public ICollection<RouteInstruction> Route { get; set; } = default!;
+    // One-to-many relationship between a Trail and Waypoint.
+    // Trail has many Waypoint.
+    public ICollection<Waypoint> Waypoints { get; set; } = default!;
 }
 
 // Use a configuration class to configure the entity.

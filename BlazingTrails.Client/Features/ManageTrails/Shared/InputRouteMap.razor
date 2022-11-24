@@ -1,0 +1,51 @@
+﻿@using BlazingTrails.ComponentLibrary.Map
+@using BlazingTrails.Shared.Features.ManageTrails.Shared;
+
+@*Creating a custom form component -> inherit from 'InputBase'.*@
+@*Defines the type that the component will be able to bind to in the form.*@
+@inherits InputBase<List<TrailDto.WaypointDto>>
+
+@*Set up handlers for the events and pass in any existing waypoints.*@
+<div class="@CssClass">
+    <RouteMap Width="100%" 
+    OnWaypointAdded="AddWaypoint" 
+    OnWaypointDeleted="DeleteWaypoint" 
+    Waypoints="_waypoints" />
+</div>
+
+@code {
+    private List<LatLong> _waypoints = new();
+
+    protected override void OnParametersSet()
+    {
+        if (CurrentValue?.Count > 0)
+        {
+            _waypoints.Clear();
+
+            // Convert any existing waypoints to a list so they can be passed to JavaScript.
+            _waypoints.AddRange(CurrentValue.Select(x => new LatLong(x.Latitude, x.Longitude)));
+        }
+    }
+
+    protected override bool TryParseValueFromString(
+        string? value, 
+        out List<TrailDto.WaypointDto> result, 
+        out string validationErrorMessage)
+    {
+        throw new NotImplementedException();
+    }
+
+    // Handler for adding a waypoint.
+    private void AddWaypoint(LatLong waypoint)
+    {
+        _waypoints.Add(waypoint);
+        CurrentValue?.Add(new TrailDto.WaypointDto(waypoint.Lat, waypoint.Lng));
+    }
+
+    // Handler for deleting a waypoint.
+    private void DeleteWaypoint(LatLong waypoint)
+    {
+        _waypoints.Remove(waypoint);
+        CurrentValue?.Remove(new TrailDto.WaypointDto(waypoint.Lat, waypoint.Lng));
+    }
+}

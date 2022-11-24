@@ -22,7 +22,7 @@ public class GetTrailsEndpoint : BaseAsyncEndpoint
     {
         // All trails are retrieved from the database.
         var trails = await _database.Trails
-            .Include(x => x.Route)
+            .Include(x => x.Waypoints)
             .ToListAsync(cancellationToken);
 
         foreach (var trail in trails)
@@ -39,7 +39,8 @@ public class GetTrailsEndpoint : BaseAsyncEndpoint
                 trail.Location,
                 trail.TimeInMinutes,
                 trail.Length,
-                trail.Description
+                trail.Description,
+                trail.Waypoints.Select(wp => new GetTrailsRequest.Waypoint(wp.Latitude, wp.Longitude)).ToList()
                 ))
             );
 

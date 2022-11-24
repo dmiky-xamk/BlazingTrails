@@ -10,7 +10,7 @@ public class BlazingTrailsContext : DbContext
 {
     // DbSet<T>: Essentially repositories.
     public DbSet<Trail> Trails => Set<Trail>();
-    public DbSet<RouteInstruction> RouteInstructions => Set<RouteInstruction>();
+    public DbSet<Waypoint> Waypoints => Set<Waypoint>();
 
     public BlazingTrailsContext(DbContextOptions<BlazingTrailsContext> options)
         : base(options) { }
@@ -21,6 +21,6 @@ public class BlazingTrailsContext : DbContext
 
         // Hook up the entity configuration classes.
         modelBuilder.ApplyConfiguration(new TrailConfig());
-        modelBuilder.ApplyConfiguration(new RouteInstructionConfig());
+        modelBuilder.ApplyConfiguration(new WaypointConfig());
     }
 }

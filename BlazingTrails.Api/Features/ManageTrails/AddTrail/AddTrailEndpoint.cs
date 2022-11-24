@@ -36,23 +36,16 @@ public class AddTrailEndpoint : BaseAsyncEndpoint
             Description = request.Trail.Description,
             Location = request.Trail.Location,
             TimeInMinutes = request.Trail.TimeInMinutes,
-            Length = request.Trail.Length
+            Length = request.Trail.Length,
+            Waypoints = request.Trail.Waypoints
+            .Select(wp => new Waypoint
+            {
+                Latitude = wp.Latitude,
+                Longitude = wp.Longitude,
+            }).ToList()
         };
 
         await _database.Trails.AddAsync(trail, cancellationToken);
-
-        // A collection of RouteInstructions is created using the data in the request.
-        // These will be persisted to the database.
-        var routeInstructions = request.Trail.Route
-            .Select(x => new RouteInstruction
-            {
-                Stage = x.Stage,
-                Description = x.Description,
-                Trail = trail
-            });
-
-        await _database.RouteInstructions.AddRangeAsync(routeInstructions, cancellationToken);
-
 
         // Persist the changes.
         await _database.SaveChangesAsync(cancellationToken);

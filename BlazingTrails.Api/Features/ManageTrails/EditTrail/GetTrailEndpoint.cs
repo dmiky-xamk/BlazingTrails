@@ -23,7 +23,7 @@ public class GetTrailEndpoint
     {
         // Load the requested trail from the database.
         var trail = await _database.Trails
-            .Include(x => x.Route)
+            .Include(x => x.Waypoints)
             .FirstOrDefaultAsync(x => x.Id == trailId, cancellationToken: cancellationToken);
 
         // If the trail is not found.
@@ -42,8 +42,8 @@ public class GetTrailEndpoint
                 trail.TimeInMinutes,
                 trail.Length,
                 trail.Description,
-                trail.Route.Select(ri =>
-                    new GetTrailRequest.RouteInstruction(ri.Id, ri.Stage, ri.Description)
+                trail.Waypoints.Select(wp =>
+                    new GetTrailRequest.Waypoint(wp.Latitude, wp.Longitude)
                     )
                 )
             );

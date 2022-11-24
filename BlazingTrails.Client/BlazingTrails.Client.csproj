@@ -21,6 +21,7 @@
 		<Watch Remove="Features\Home\TrailSearch.razor.scss" />
 		<Watch Remove="Features\ManageTrails\FormSection.razor.scss" />
 		<Watch Remove="Features\ManageTrails\InputTime.razor.scss" />
+		<Watch Remove="Features\ManageTrails\Shared\InputRouteMap.razor.scss" />
 		<None Update="**/*.css" Watch="false" />
 	</ItemGroup>
 

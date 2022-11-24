@@ -1,5 +1,6 @@
 ﻿@*Routable component. Define the route this component is responsible for.*@
 @page "/"
+@using BlazingTrails.ComponentLibrary.Map;
 
 @*The instance from dependency injection.*@
 @inject IMediator Mediator
@@ -33,8 +34,8 @@ else if (_trails.Any())
     <ViewSwitcher Items="_trails" Context="trail">
         <GridTemplate>
 
-            @*Template that uses RenderFragment<T> allows us to access the properties of the object through a 'context' variable.*@
-            <TrailCard Trail="trail" OnSelected="HandleTrailSelected" />
+        @*Template that uses RenderFragment<T> allows us to access the properties of the object through a 'context' variable.*@
+        <TrailCard Trail="trail" OnSelected="HandleTrailSelected" />
         </GridTemplate>
         <HeaderTemplate>
             <th>Name</th>
@@ -121,7 +122,9 @@ else
                     Description = x.Description,
                     Location = x.Location,
                     Length = x.Length,
-                    TimeInMinutes = x.TimeInMinutes
+                    TimeInMinutes = x.TimeInMinutes,
+                    Waypoints = x.Waypoints.Select(wp => 
+                        new LatLong(wp.Latitude, wp.Longitude)).ToList()
                 });
         }
         catch (HttpRequestException ex)
