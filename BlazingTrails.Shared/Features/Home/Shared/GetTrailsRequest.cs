@@ -14,6 +14,7 @@ public record GetTrailsRequest : IRequest<GetTrailsRequest.Response>
         int TimeInMinutes,
         int Length,
         string Description,
+        string Owner,
         IEnumerable<Waypoint> Waypoints);
 
     public record Waypoint(decimal Latitude, decimal Longitude);

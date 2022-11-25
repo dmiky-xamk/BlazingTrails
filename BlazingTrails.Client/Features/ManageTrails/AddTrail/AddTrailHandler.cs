@@ -10,19 +10,22 @@ public class AddTrailHandler :
     IRequestHandler<AddTrailRequest,
     AddTrailRequest.Response>
 {
-    // Inject HttpClient to make API calls.
-    private readonly HttpClient _httpClient;
+    // Inject 'IHttpClientFactory' to create a custom client.
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public AddTrailHandler(HttpClient httpClient)
+    public AddTrailHandler(IHttpClientFactory httpClientFactory)
     {
-        _httpClient = httpClient;
+        _httpClientFactory = httpClientFactory;
     }
 
     // Handle the request by MediatR.
     public async Task<AddTrailRequest.Response> Handle(AddTrailRequest request, CancellationToken cancellationToken)
     {
+        // Create a custom HTTP client that passes access token with each request.
+        var client = _httpClientFactory.CreateClient("SecureAPIClient");
+
         // HttpClient calls the API using the route template defined on the request.
-        var response = await _httpClient.PostAsJsonAsync(
+        var response = await client.PostAsJsonAsync(
             AddTrailRequest.RouteTemplate,
             request,
             cancellationToken);

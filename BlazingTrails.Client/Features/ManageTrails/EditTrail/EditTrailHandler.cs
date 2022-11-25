@@ -6,17 +6,20 @@ namespace BlazingTrails.Client.Features.ManageTrails.EditTrail;
 
 public class EditTrailHandler : IRequestHandler<EditTrailRequest, EditTrailRequest.Response>
 {
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public EditTrailHandler(HttpClient httpClient)
+    public EditTrailHandler(IHttpClientFactory httpClientFactory)
     {
-        _httpClient = httpClient;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<EditTrailRequest.Response> Handle(EditTrailRequest request, CancellationToken cancellationToken)
     {
+        // Create a custom HTTP client that passes access token with each request.
+        var client = _httpClientFactory.CreateClient("SecureAPIClient");
+
         // The updated trail details are sent to the API via a HTTP PUT request.
-        var response = await _httpClient.PutAsJsonAsync(EditTrailRequest.RouteTemplate, request, cancellationToken);
+        var response = await client.PutAsJsonAsync(EditTrailRequest.RouteTemplate, request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {

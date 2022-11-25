@@ -24,11 +24,13 @@ app.UseStaticFiles();
 
 app.UseStaticFiles(new StaticFileOptions()
 {
-    // Allow the API to server images in the Images folder to the Blzor application as static files.
+    // Allow the API to serve images in the Images folder to the Blazor application as static files.
     FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Images")),
     RequestPath = new PathString("/Images")
 });
 
+// Using Auth0 with JWTs.
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

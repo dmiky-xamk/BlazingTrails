@@ -13,6 +13,7 @@ public class Trail
     public string Location { get; set; } = default!;
     public int TimeInMinutes { get; set; }
     public int Length { get; set; }
+    public string Owner { get; set; } = default!;
 
     // One-to-many relationship between a Trail and Waypoint.
     // Trail has many Waypoint.
@@ -31,5 +32,6 @@ public class TrailConfig : IEntityTypeConfiguration<Trail>
         builder.Property(x => x.Location).IsRequired();
         builder.Property(x => x.TimeInMinutes).IsRequired();
         builder.Property(x => x.Length).IsRequired();
+        builder.Property(x => x.Owner).IsRequired();
     }
 }

@@ -1,0 +1,34 @@
+﻿@inject NavigationManager Navigation
+@inject SignOutSessionStateManager SignOutManager
+
+@*Display UI fragments based on the user's authorization status.*@
+<div class="container text-end">
+    <AuthorizeView>
+        <Authorized>
+            <div>
+                <AuthorizeView Context="adminContext" Roles="Administrator">
+                    Admin | 
+                </AuthorizeView>
+
+                @*Information about the user can be accessed via the 'context' parameter.*@
+                Hello @context.User.Identity!.Name
+                <a href="#" @onclick="BeginSignOut">Log out</a>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <a href="authentication/login">Log in / Sign up</a>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+@code {
+
+    // Uses 'SignOutManager' to help prevent cross-site request forgery (CSRF) attacks on the logout endpoint.
+    // Sets some state, which is checked in the logout function of the Authentication page component,
+    // before allowing the user to complete the logout process.
+    private async Task BeginSignOut(MouseEventArgs args)
+    {
+        await SignOutManager.SetSignOutState();
+        Navigation.NavigateTo("authentication/logout");
+    }
+}

@@ -21,12 +21,24 @@ else if (_trails.Any())
 
     <TrailSearch />
 
-    <div class="mb-4">
-        <p class="fst-italic text-center">
-            Do you have an awesome trail you'd like to share?
-            <a href="add-trail">Add it here</a>.
-        </p>
-    </div>
+    <AuthorizeView>
+
+        @*Only authorized users are allowed to add new trails.*@
+        <Authorized>
+            <div class="mb-4">
+                <p class="fst-italic text-center">
+                    Do you have an awesome trail you'd like to share?
+                    <a href="add-trail">Add it here</a>.
+                </p>
+            </div>
+        </Authorized>
+
+        <NotAuthorized>
+            <div class="mb-4">
+                <p class="fst-italic text-center">Do you have an awesome trail you'd like to share? Please <a href="authentication/login">log in or sign up</a>.</p>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
 
     @*The list of trails is now passed to the component.*@
     @*We can rename the 'context' variable when the template is defined as RenderFragment<T>.*@
@@ -34,8 +46,8 @@ else if (_trails.Any())
     <ViewSwitcher Items="_trails" Context="trail">
         <GridTemplate>
 
-        @*Template that uses RenderFragment<T> allows us to access the properties of the object through a 'context' variable.*@
-        <TrailCard Trail="trail" OnSelected="HandleTrailSelected" />
+            @*Template that uses RenderFragment<T> allows us to access the properties of the object through a 'context' variable.*@
+            <TrailCard Trail="trail" OnSelected="HandleTrailSelected" />
         </GridTemplate>
         <HeaderTemplate>
             <th>Name</th>
@@ -51,16 +63,23 @@ else if (_trails.Any())
             <td>@trail.TimeFormatted</td>
             <td class="text-end">
 
+                @*Authorize editing the trail only for its creator.*@
+                <AuthorizeView>
+                    @if (trail.Owner.Equals(context.User.Identity?.Name, StringComparison.OrdinalIgnoreCase)
+                        || context.User.IsInRole("Administrator"))
+                    {
+                        <button @onclick="@(() => NavManager.NavigateTo($"/edit-trail/{trail.Id}"))"
+                        title="Edit"
+                        class="btn btn-outline-primary">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    }
+                </AuthorizeView>
+
                 <button @onclick="(() => HandleTrailSelected(trail))"
                     title="View"
                     class="btn btn-primary">
                     <i class="bi bi-binoculars"></i>
-                </button>
-
-                <button @onclick="@(() => NavManager.NavigateTo($"/edit-trail/{trail.Id}"))"
-                    title="Edit"
-                    class="btn btn-outline-primary">
-                    <i class="bi bi-pencil"></i>
                 </button>
             </td>
         </RowTemplate>
@@ -122,8 +141,9 @@ else
                     Description = x.Description,
                     Location = x.Location,
                     Length = x.Length,
+                    Owner = x.Owner,
                     TimeInMinutes = x.TimeInMinutes,
-                    Waypoints = x.Waypoints.Select(wp => 
+                    Waypoints = x.Waypoints.Select(wp =>
                         new LatLong(wp.Latitude, wp.Longitude)).ToList()
                 });
         }

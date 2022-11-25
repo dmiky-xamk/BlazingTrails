@@ -1,0 +1,29 @@
+﻿@*Used to determine what operation to perform.*@
+@page "/authentication/{action}"
+
+@using Microsoft.Extensions.Configuration
+
+@inject NavigationManager Navigation
+@inject IConfiguration Configuration
+
+@*Responsible for managing the user's authentication status and interacts with Auth0.*@
+<RemoteAuthenticatorView Action="@Action">
+
+    @*Blazor logs the user out on the client, but the logout from Auth0 must be handled manually by calling the Auth0 logout endpoint.*@
+    <LogOut>
+        @{
+            var authority = (string)Configuration["Auth0:Authority"];
+            var clientId = (string)Configuration["Auth0:ClientId"];
+
+            //Navigation.NavigateTo($"{authority}/v2/logout?client_id={clientId}");
+
+            // Log out and redirect the user back to the homepage.
+            Navigation.NavigateTo($"{authority}/v2/logout?returnTo=https%3A%2F%2Flocalhost:7133&client_id={clientId}");
+        }
+    </LogOut>
+</RemoteAuthenticatorView>
+
+@code {
+    [Parameter]
+    public string? Action { get; set; }
+}

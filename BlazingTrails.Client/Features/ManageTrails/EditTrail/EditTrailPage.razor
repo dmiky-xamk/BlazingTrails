@@ -1,4 +1,5 @@
 ﻿@page "/edit-trail/{TrailId:int}"
+@attribute [Authorize]
 @using BlazingTrails.Shared.Features.ManageTrails.EditTrail
 @using BlazingTrails.Shared.Features.ManageTrails.Shared
 @inject IMediator Mediator
@@ -53,7 +54,7 @@ else
         var response = await Mediator.Send(new GetTrailRequest(TrailId));
 
         // Copy the details into the local field which is passed to the TrailForm to be edited.
-        if (response.Trail is not null)
+        if (response?.Trail is not null)
         {
             _trail.Id = TrailId;
             _trail.Name = response.Trail.Name;

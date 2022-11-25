@@ -1,5 +1,6 @@
 ﻿using BlazingTrails.Shared.Features.ManageTrails.Shared;
 using MediatR;
+using System.Net.Http;
 
 namespace BlazingTrails.Client.Features.ManageTrails.Shared;
 
@@ -7,15 +8,16 @@ public class UploadTrailImageHandler :
     IRequestHandler<UploadTrailImageRequest,
         UploadTrailImageRequest.Response>
 {
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public UploadTrailImageHandler(HttpClient httpClient)
+    public UploadTrailImageHandler(IHttpClientFactory httpClientFactory)
     {
-        _httpClient = httpClient;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<UploadTrailImageRequest.Response> Handle(UploadTrailImageRequest request, CancellationToken cancellationToken)
     {
+
         // Read the file as a stream.
         var fileContent = request.File.OpenReadStream(request.File.Size, cancellationToken);
 
@@ -25,9 +27,12 @@ public class UploadTrailImageHandler :
             { new StreamContent(fileContent), "image", request.File.Name }
         };
 
+        // Create a custom HTTP client that passes access token with each request.
+        var client = _httpClientFactory.CreateClient("SecureAPIClient");
+
         // Post the file to the API.
         // GIVE THE FILE A NEW NAME IN THE API! DO NOT USE THE USER GIVEN NAME AS IT COULD BE MALICIOUS!
-        var response = await _httpClient.PostAsync(UploadTrailImageRequest.RouteTemplate.Replace("{trailId}", request.TrailId.ToString()), content, cancellationToken);
+        var response = await client.PostAsync(UploadTrailImageRequest.RouteTemplate.Replace("{trailId}", request.TrailId.ToString()), content, cancellationToken);
 
         // Deserialize and return a successful API response.
         if (response.IsSuccessStatusCode)
