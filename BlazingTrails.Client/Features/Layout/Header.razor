@@ -1,8 +1,36 @@
 ﻿@using BlazingTrails.Client.Features.Auth
+@using BlazingTrails.Client.State
+@inject AppState AppState
+@implements IDisposable
+
+
 <nav class="navbar mb-3 shadow">
     <a class="navbar-brand" href="/">
-        <img src="./images/logo.png"/>
+        <img src="./images/logo.png" />
     </a>
 </nav>
 
-<LoginStatus />
+<div class="container d-flex justify-content-between">
+    <p>
+        You have
+        <span class="fw-bold">@AppState.FavoriteTrailsState.FavoriteTrails.Count</span>
+        <a href="/favorite-trails">favorite trails</a>
+    </p>
+    <LoginStatus />
+</div>
+
+
+@code {
+
+    // When the component initializes, it subscribes to 'OnChange' event exposed by 'FavoriteTrailsState'.
+    protected override void OnInitialized()
+    {
+        AppState.FavoriteTrailsState.OnChange += StateHasChanged;
+    }
+
+    // When subscribing to events, it's always best practice to unsubscribe from them using 'IDisposable'.
+    void IDisposable.Dispose()
+    {
+        AppState.FavoriteTrailsState.OnChange -= StateHasChanged;
+    }
+}

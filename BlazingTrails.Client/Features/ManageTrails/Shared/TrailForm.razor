@@ -1,4 +1,6 @@
-﻿@using BlazingTrails.Client.Validation
+﻿@inject AppState AppState
+@using BlazingTrails.Client.State;
+@using BlazingTrails.Client.Validation
 @using BlazingTrails.ComponentLibrary.Map
 @using BlazingTrails.Shared.Features.ManageTrails.Shared
 
@@ -6,6 +8,9 @@
 @* Pass the EditContext instance to EditForm we create rather than the model directly. *@
 <EditForm EditContext="_editContext" OnValidSubmit="SubmitForm">
     <FluentValidationValidator />
+
+    @*A class that we are using like a component to track the state of the form.*@
+    <FormStateTracker />
 
     <FormSection Title="Basic Details"
                  HelpText="This information is used to identify the trail and can be searched to help hikers find it.">
@@ -129,14 +134,6 @@
     // We need this so we can update or remove the image after SubmitEditTrail handler in the EditTrailPage runs.
     protected override void OnParametersSet()
     {
-        // Having direct access to EditContext allows to manually trigger validation
-        // or hook onto events such as OnFieldChanged or OnValidationStateChanged.
-        // Create a new EditContext instance for the trail model.
-        _editContext = new EditContext(_trail);
-
-        // Configure the EditContext to use our new class provider.
-        _editContext.SetFieldCssClassProvider(new BootstrapCssClassProvider());
-
         // If editing, copy the details into the local _trail field that the form components are bound to.
         if (Trail is not null)
         {
@@ -152,6 +149,21 @@
             _trail.Waypoints.Clear();
             _trail.Waypoints.AddRange(Trail.Waypoints.Select(wp => new TrailDto.WaypointDto(wp.Latitude, wp.Longitude)));
         }
+
+        else
+        {
+            // When adding a new trail, attempt to get an existing trail from 'AppState'.
+            // If no existing state is present, a new blank model will be returned.
+            _trail = AppState.NewTrailState.GetTrail();
+        }
+
+        // Having direct access to EditContext allows to manually trigger validation
+        // or hook onto events such as OnFieldChanged or OnValidationStateChanged.
+        // Create a new EditContext instance for the trail model.
+        _editContext = new EditContext(_trail);
+
+        // Configure the EditContext to use our new class provider.
+        _editContext.SetFieldCssClassProvider(new BootstrapCssClassProvider());
     }
 
     // Will be called by the consuming component to reset the form if required.
@@ -161,6 +173,7 @@
         _editContext = new EditContext(_trail);
         _editContext.SetFieldCssClassProvider(new BootstrapCssClassProvider());
         _trailImage = null;
+        AppState.NewTrailState.ClearTrail();
     }
 
     // Assign the selected file to the trailImage field.
@@ -169,7 +182,7 @@
         _trailImage = e.File;
         _trail.ImageAction = ImageAction.Add;
     }
-    
+
     private void RemoveTrailImage()
     {
         _trailImage = null;
@@ -179,4 +192,5 @@
     // EditForm's OnValidSubmit will invoke this. Allows the handler to decide how to persist the data from the form.
     private async Task SubmitForm()
         => await OnSubmit(_trail, _trailImage);
+
 }

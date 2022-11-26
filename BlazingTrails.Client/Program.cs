@@ -1,10 +1,11 @@
 using BlazingTrails.Client;
 using BlazingTrails.Client.Features.Auth;
+using BlazingTrails.Client.State;
+using Blazored.LocalStorage;
 using MediatR;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.Extensions.Options;
 
 // WebAssemblyHost = Blazor WASM
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -21,12 +22,21 @@ builder.RootComponents.Add<HeadOutlet>("head::after"); // Allows to modify the h
 // Use a custom Blazor message handler with a named HttpClient which passes access token with every request we make.
 // Easy to use with endpoints that require authentication.
 // Will throw an exception if access token isn't found, so don't use with unsecure endpoints.
-builder.Services.AddHttpClient("SecureAPIClient", client => 
+builder.Services.AddHttpClient("SecureAPIClient", client =>
     client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
     .AddHttpMessageHandler<BaseAddressAuthorizationMessageHandler>();
 
 // Available to classes and components via dependency injection.
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+
+// Service scopes in Blazor work differently.
+// Adding a service as scoped behaves equivalently as a singleton in other ASP.NET frameworks.
+// Singleton here would provide one 'AppState' instance that would be shared by every user.
+// Scoped provides one 'AppState' instance per user.
+builder.Services.AddScoped<AppState>();
+
+// Make accessing local storage easier.
+builder.Services.AddBlazoredLocalStorage();
 
 // Add support for authentication using OIDC (OpenID Connect) compliant identity providers.
 builder.Services.AddOidcAuthentication(opt =>
@@ -39,8 +49,7 @@ builder.Services.AddOidcAuthentication(opt =>
 
     opt.ProviderOptions.AdditionalProviderParameters.Add("audience", builder.Configuration["Auth0:Audience"]);
 
-   // Registers our class that it will be called every time a user logs in.
+    // Registers our class that it will be called every time a user logs in.
 }).AddAccountClaimsPrincipalFactory<CustomUserFactory<RemoteUserAccount>>();
-
 
 await builder.Build().RunAsync();

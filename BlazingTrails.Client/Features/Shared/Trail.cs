@@ -1,6 +1,6 @@
 ﻿using BlazingTrails.ComponentLibrary.Map;
 
-namespace BlazingTrails.Client.Features.Home;
+namespace BlazingTrails.Client.Features.Shared;
 
 public class Trail
 {

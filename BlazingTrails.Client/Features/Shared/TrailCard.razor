@@ -25,6 +25,8 @@
             <i class="bi bi-binoculars"></i>
         </button>
 
+        <FavoriteButton Trail="Trail" />
+
         @*Authorize editing the trail only for its creator.*@
         <AuthorizeView>
             @if (Trail.Owner.Equals(context.User.Identity?.Name, StringComparison.OrdinalIgnoreCase)

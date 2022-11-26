@@ -1,4 +1,7 @@
-﻿@*Root component for the Blazor Application.*@
+﻿@using BlazingTrails.Client.State;
+@inject AppState AppState;
+
+@*Root component for the Blazor Application.*@
 
 @*
     Router is responsible for managing all aspects of client-side routing.
@@ -7,7 +10,7 @@
     The router will load either the matched component or a 'Not Found' template.
 *@
 
-@*CascadingParameter containts the current authentication state of the user.*@
+@*CascadingParameter containts the current authentication state of the user and cascades it to every component below.*@
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(Program).Assembly">
         <Found Context="routeData">
@@ -37,3 +40,14 @@
         </NotFound>
     </Router>
 </CascadingAuthenticationState>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Initialize the state storage on the first render of the 'App' component.
+            await AppState.Initialize();
+        }
+    }
+}

@@ -16,12 +16,12 @@
 	-->
 	<ItemGroup>
 		<Watch Include="**/*.scss" />
-		<Watch Remove="Features\Home\HomePage.razor.scss" />
 		<Watch Remove="Features\Home\SearchFilter.razor.scss" />
 		<Watch Remove="Features\Home\TrailSearch.razor.scss" />
 		<Watch Remove="Features\ManageTrails\FormSection.razor.scss" />
 		<Watch Remove="Features\ManageTrails\InputTime.razor.scss" />
 		<Watch Remove="Features\ManageTrails\Shared\InputRouteMap.razor.scss" />
+		<Watch Remove="Features\Shared\NoTrails.razor.scss" />
 		<None Update="**/*.css" Watch="false" />
 	</ItemGroup>
 
@@ -58,6 +58,7 @@
 
   <ItemGroup>
     <PackageReference Include="Blazored.FluentValidation" Version="2.0.3" />
+    <PackageReference Include="Blazored.LocalStorage" Version="4.1.2" />
     <PackageReference Include="MediatR" Version="9.0.0" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.6" />
