@@ -1,0 +1,51 @@
+﻿@using BlazingTrails.ComponentLibrary.Map
+@inherits TestContext
+
+@code {
+    private BunitJSModuleInterop _routeMapModule;
+    private JSRuntimeInvocationHandler _routeMapModuleInitializeInvocation;
+
+    public RouteMapTests()
+    {
+        // Sets up the call that imports the 'routeMap' JavaScript module for all the tests in the file.
+        _routeMapModule = JSInterop.SetupModule();
+
+        // Sets up the call to the 'initialize' function on the 'routeMap' module.
+        // Lambda returns true -> the function can be called with any arguments.
+        // Component will await until 'SetVoidResult' is called. Chain it to ensure that the task will be completed as soon as the JavaScript call is made.
+        _routeMapModuleInitializeInvocation = _routeMapModule.SetupVoid("initialize", _ => true).SetVoidResult();
+    }
+
+    [Fact]
+    public void InitializesMap_When_ComponentFirstRenders()
+    {
+        // Arrange / Act
+        var cut = Render(@<RouteMap />);
+
+        // The call to the 'initialize' function is verified, including that it happened only once.
+        // Assert
+        _routeMapModuleInitializeInvocation.VerifyInvoke("initialize", calledTimes: 1);
+    }
+
+    [Fact]
+    public void CallsDeleteLastWaypointFunction_When_DeleteLastWaypointButtonIsClicked()
+    {
+        // Dummy result to be returned from the JavaScript interop call.
+        // Arrange
+        var latLongResult = new LatLong(1m, 2m);
+
+        // Sets up the expected JavaScript invocation to return the dummy latLongResult.
+        var plannedInvocation = _routeMapModule
+            .Setup<LatLong>("deleteLastWaypoint", _ => true)
+            .SetResult(latLongResult);
+
+        var cut = Render(@<RouteMap />);
+        var deleteWaypointButton = cut.Find("button[title=\"Delete last waypoint\"]");
+
+        // Act
+        deleteWaypointButton.Click();
+
+        // Assert
+        plannedInvocation.VerifyInvoke("deleteLastWaypoint", calledTimes: 1);
+    }
+}

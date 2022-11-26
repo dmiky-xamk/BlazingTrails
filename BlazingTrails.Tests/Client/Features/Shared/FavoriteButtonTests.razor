@@ -1,0 +1,109 @@
+﻿@*Inheriting gives us access to the features of bUnit*@
+@inherits TestContext
+
+@code {
+
+    // 'Fixture' class is from 'AutoFixture' and we use it to create test data in the tests.
+    private readonly Fixture _fixture = new();
+
+    public FavoriteButtonTests()
+    {
+        // Provides an in-memory local storage implementation that can be used for testing.
+        this.AddBlazoredLocalStorage();
+
+        // 'FavoriteButton' relies on 'AppState' so we need to add it to the test context's
+        // service container so it can be injected into the component.
+        this.Services.AddScoped<AppState>();
+    }
+
+    // -- Testing rendered markup.
+    [Fact]
+    public void RendersAddFavoriteButton_When_TrailIsNotFavorited()
+    {
+        // Fixture instance creates a Trail instance with dummy data.
+        // Arrange
+        var testTrail = _fixture.Create<Trail>();
+
+        // bUnit provides 'Render' method which allows us to create
+        // an instance of the component we want to test.
+        // Act
+        var cut = Render(@<FavoriteButton Trail="testTrail" />);
+
+        // 'MarkupMatches' method verifies the markup produced from the rendered component.
+        // Assert
+        cut.MarkupMatches(
+    @<button class="btn btn-outline-primary m-1"
+                     title="Favorite">
+        <i class="bi bi-heart"></i>
+    </button>
+    );
+    }
+
+    [Fact]
+    public async Task RendersRemoveFavoriteButton_When_TrailIsFavorited()
+    {
+        // Arrange
+        var testTrail = _fixture.Create<Trail>();
+
+        // Retrieve the 'AppState' instance from the services container.
+        var appState = this.Services.GetService<AppState>()!;
+
+        // Add the 'testTrail' to the list of favorites in 'AppState'.
+        await appState.FavoriteTrailsState.AddFavorite(testTrail);
+
+        // Act
+        var cut = Render(@<FavoriteButton Trail="testTrail" />);
+
+        // Assert
+        cut.MarkupMatches(
+    @<button class="btn btn-outline-primary m-1"
+                     title="Favorite">
+        <i class="bi bi-heart-fill"></i>
+    </button>
+        );
+    }
+
+    // -- Triggering event handlers.
+    [Fact]
+    public void AddTrailToFavorites_When_TrailIsNotAFavorite()
+    {
+        // Arrange
+        var testTrail = _fixture.Create<Trail>();
+
+        // Rendering the component is now part of the 'Arrange' phase.
+        var cut = Render(@<FavoriteButton Trail="testTrail" />);
+
+        // Once the element is rendered, we can use the 'Find' method to capture
+        // a reference to the button element in its markup.
+        var button = cut.Find("button");
+
+        // Instruct bUnit to execute the button's click event.
+        // Act
+        button.Click();
+
+        // Assert
+        var appState = this.Services.GetService<AppState>()!;
+        
+        // Assert that the trail has been added to the list of favorites in 'AppState'.
+        Assert.True(appState.FavoriteTrailsState.IsFavorite(testTrail));
+    }
+
+    [Fact]
+    public async Task RemoveFromFavorites_When_TrailIsAFavorite()
+    {
+        // Arrange
+        var testTrail = _fixture.Create<Trail>();
+        var appState = this.Services.GetService<AppState>()!;
+
+        await appState.FavoriteTrailsState.AddFavorite(testTrail);
+
+        var cut = Render(@<FavoriteButton Trail="testTrail" />);
+        var button = cut.Find("button");
+
+        // Act
+        button.Click();
+
+        // Assert
+        Assert.False(appState.FavoriteTrailsState.IsFavorite(testTrail));
+    }
+}

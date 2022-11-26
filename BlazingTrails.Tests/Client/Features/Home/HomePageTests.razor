@@ -1,0 +1,49 @@
+﻿@using BlazingTrails.Client.Features.Home
+@inherits TestContext
+
+@code {
+
+    public HomePageTests()
+    {
+        this.AddBlazoredLocalStorage();
+        this.AddTestAuthorization();
+        this.Services.AddScoped<AppState>();
+
+        // Sets up 'MediatR' to use the test stub by having it scan the test project assembly for handlers.
+        // This will register our stub handler so it will be called when the 'HomePage' component is rendered.
+        this.Services.AddMediatR(typeof(HomePageTests).Assembly);
+    }
+
+    [Fact]
+    public void RendersTrailDetails_When_TrailSelected()
+    {
+        // The 'TrailDetails' component renders the 'RouteMap' component, which
+        // makes JS interop calls, so we need to set the JSInterop mode to loose; otherwise we would need to set up every call.
+        // Arrange
+        JSInterop.Mode = JSRuntimeMode.Loose;
+
+        var cut = Render(@<HomePage />);
+
+        // 'FindComponents' allows us to retrieve all instances of the specified component withing the rendered component.
+        var trailCards = cut.FindComponents<TrailCard>();
+
+        // Find the 'View' button on the first 'TrailCard' instance and trigger its event to render the 'TrailDetails' component.
+        var viewButton = trailCards[0].Find("button[title=\"View\"]");
+
+        // Act
+        viewButton.Click();
+
+        // Assert
+        var trailDetails = cut.FindComponent<TrailDetails>();
+
+        var isOpen = trailDetails.Find("div.drawer-wrapper.slide");
+
+        // Verifies that the drawer is open by checking that the slide class has been applied.
+        Assert.NotNull(isOpen);
+
+        // Verifies that the name on the 'TrailDetails' component matches that of the trail
+        // whose 'View' button was clicked.
+        Assert.Equal(trailCards[0].Instance.Trail.Name, trailDetails.Instance.Trail.Name);
+
+    }
+}

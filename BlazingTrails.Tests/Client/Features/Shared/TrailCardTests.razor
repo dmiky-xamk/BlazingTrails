@@ -1,0 +1,66 @@
+﻿@inherits TestContext
+
+@code {
+
+    // Allows sharing across multiple tests.
+    private readonly TestAuthorizationContext _authContext;
+    private readonly Fixture _fixture = new();
+
+    public TrailCardTests()
+    {
+        this.AddBlazoredLocalStorage();
+        this.Services.AddScoped<AppState>();
+
+        // Adds and sets up the necessary auth services and infrastructure for testing.
+        _authContext = this.AddTestAuthorization();
+    }
+
+    // -- Faking authentication and authorization
+    [Fact]
+    public void RendersEditButton_When_UserIsAuthorized()
+    {
+        // To save repeating the username in multiple strings, we create it as a variable.
+        // Arrance
+        var authorizedUser = "Test User";
+
+        // Sets up authorized user with the given username in the test context.
+        _authContext.SetAuthorized(authorizedUser);
+
+        var testTrail = _fixture.Create<Trail>();
+
+        // Set the trail owner equal to the username of the authorized user.
+        testTrail.Owner = authorizedUser;
+
+        // Act
+        var cut = Render(@<TrailCard Trail="testTrail" />);
+
+        // Find the 'Edit' button.
+        // Assert
+        var editButton = cut.Find("button[title=\"Edit\"]");
+
+        // Verify that the 'Edit' button is present in the rendered markup.
+        Assert.NotNull(editButton);
+    }
+
+    [Fact]
+    public void RendersEditButton_When_UserIsAdministrator()
+    {
+        // Arrange
+        var adminUser = "Admin User";
+
+        _authContext.SetAuthorized(adminUser);
+
+        // Specify the role the authorized user belongs to.
+        _authContext.SetRoles("Administrator");
+
+        var testTrail = _fixture.Create<Trail>();
+
+        // Act
+        var cut = Render(@<TrailCard Trail="testTrail" />);
+
+        // Assert
+        var editButton = cut.Find("button[title=\"Edit\"]");
+
+        Assert.NotNull(editButton);
+    }
+}
